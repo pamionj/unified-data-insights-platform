@@ -1,3 +1,6 @@
+🌎 Language:
+🇺🇸 English | 🇨🇱 [Español](README_ES.md)
+
 # Unified Data Insights Platform
 
 ## Overview
