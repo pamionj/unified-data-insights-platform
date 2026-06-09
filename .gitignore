@@ -1,0 +1,40 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Archivos de Python compilados y caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# Archivos de dependencias y builds
+dist/
+build/
+
+# Archivos de base de datos y logs
+*.db
+*.sqlite3
+logs/*.log
+
+# Archivos de datos (sensibles o generados)
+data/raw/*.csv
+data/processed/*.csv
+
+# Archivos de entorno
+.env
+.env.*
+
+# Excepciones para mantener las carpetas en Git
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!database/.gitkeep
+!logs/.gitkeep
