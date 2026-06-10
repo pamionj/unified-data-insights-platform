@@ -193,6 +193,7 @@ for i in range(NUM_MINGA):
     })
 
 df_minga = pd.DataFrame(data_minga)
+df_minga['edad'] = df_minga['edad'].astype(object)
 
 # Problemas de calidad para minga
 for idx in df_minga.sample(n=4).index:
