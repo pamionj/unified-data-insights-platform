@@ -1,0 +1,53 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Python: archivos compilados y caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# IDEs y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+
+# Archivos internos / específicos del entorno de desarrollo
+AGENTS.md
+package-lock.json
+
+# Sistema de Release / ejecutable excluido temporalmente del repo público
+launcher.py
+launcher_gui.py
+README_BUILD.md
+README_CLIENTE.txt
+
+# Artefactos de build y release
+dist/
+build/
+Release/
+pyarmor.*.log
+
+# Bases de datos y logs
+*.db
+*.sqlite3
+logs/*.log
+database/*.pid
+
+# Datos reales o generados por el ETL
+data/raw/*.csv
+data/processed/*.csv
+
+# Variables de entorno
+.env
+.env.*
+
+# Mantener estructura de carpetas
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!database/.gitkeep
+!logs/.gitkeep
