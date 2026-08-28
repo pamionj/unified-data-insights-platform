@@ -20,8 +20,16 @@ Consolidates 4 heterogeneous sources (≈52,000 records) into a unified, dedupli
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 <br>
 ![Status](https://img.shields.io/badge/Status-Production--inspired-2ea44f)
-![Tests](https://img.shields.io/badge/Tests-81%20verification%20scripts-2ea44f)
+![Data Quality](https://img.shields.io/badge/Data%20Quality-Validated-2ea44f)
 ![Etapas](https://img.shields.io/badge/Pipeline-5%20phases-2ea44f)
+
+---
+
+### 🚀 Live Demo
+
+**Try the deployed dashboard:** [Unified Data Insights Platform — Streamlit](https://unified-data-insights-platform.streamlit.app/)
+
+The live demo runs on fully synthetic data modeled after the structure and distributions of the original production dataset.
 
 ---
 
@@ -34,7 +42,7 @@ Consolidates 4 heterogeneous sources (≈52,000 records) into a unified, dedupli
 - [Quickstart (local demo)](#quickstart-local-demo)
 - [Usage](#usage)
 - [Pipeline Outputs](#pipeline-outputs)
-- [Testing & Verification](#testing--verification)
+- [Data Governance & Data Quality](#data-governance--data-quality)
 - [Engineering Challenges](#engineering-challenges)
 - [Design Decisions](#design-decisions)
 - [Real-World Implementation](#real-world-implementation)
@@ -64,7 +72,11 @@ Built on **synthetic demo data that faithfully replicates real production distri
 
 ## Why This Project?
 
-Built to demonstrate **end-to-end Data Engineering skills in a realistic, non-trivial setting** — a portfolio piece for data engineering / data analysis / Python backend roles.
+Built to demonstrate end-to-end Data Engineering skills through a real-world implementation — from heterogeneous source ingestion and data quality challenges to a production-deployed ETL pipeline and interactive analytics dashboard.
+
+The system was developed to solve an actual organizational data problem and remained operational after deployment, consolidating previously fragmented data sources into a unified and reproducible analytics workflow.
+
+It now serves as a portfolio case study for Data Engineering, Data Analytics, and Python Backend roles, with the public repository providing a fully reproducible version built on anonymized synthetic data.
 
 | Skill | Where it appears |
 |---|---|
@@ -75,7 +87,7 @@ Built to demonstrate **end-to-end Data Engineering skills in a realistic, non-tr
 | Relational modeling | Normalized SQLite schema (3 tables) with audit trail and activity counts |
 | Analytics modeling | KPI layer with geographic / demographic / behavioral dimensions, JSON-serializable result |
 | Dashboard development | Streamlit + Plotly with filters, interactive table, CSV export, dynamic color mapping |
-| Testing discipline | 81 automated tests across 8 standalone verification scripts |
+| Data governance | Source provenance, identity confidence, unmatched-record preservation, execution auditing, and reproducible loads |
 | Production thinking | Idempotent loads, rotating logs, run auditing, daemon scheduling, graceful degradation |
 | Build & packaging | Nuitka standalone distribution + Tkinter launcher + optional ZIP release |
 
@@ -249,22 +261,66 @@ python main.py --schedule 60 --now      # run immediately, then every 60 minutes
 
 ---
 
-## Testing & Verification
+## Data Governance & Data Quality
 
-Standalone, dependency-free verification scripts (not pytest) — each phase is independently verifiable from the project root with ANSI-colored output:
+Data integration is only useful when the resulting dataset is **traceable, reproducible, and safe to consume downstream**. The platform therefore treats data quality as a first-class concern throughout the pipeline rather than as a final validation step.
 
-```bash
-python verify_phase2.py                 # Extractors            — 5 tests
-python verify_phase3.py                 # Transform             — 8 tests
-python verify_phase4.py                 # Consolidate           — 10 tests
-python verify_phase5.py                 # Load + SQLite         — 10 tests
-python verify_phase6.py                 # Full pipeline         — 10 tests
-python verify_analytics.py              # Analytics             — 9 tests
-python verify_phase7.py                 # Dashboard             — 9 tests
-python verify_asistencia_extractor.py   # Attendance extractor  — 10 tests
+| Governance concern         | Implementation                                                                                                                                                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Source traceability**    | Each consolidated record retains source provenance, allowing downstream analysis to identify where a user's information originated.                                                                            |
+| **Identity resolution**    | Cross-source records are matched through a two-pass strategy with explicit confidence levels (`HIGH`, `LOW`, `UNMATCHED`) rather than forcing uncertain matches.                                               |
+| **Data normalization**     | Emails, dates, categorical values, gender labels, and other fields are normalized consistently before consolidation.                                                                                           |
+| **Deduplication**          | Deduplication rules are defined per source to distinguish genuine duplicate records from legitimate multi-event activity.                                                                                      |
+| **Unmatched preservation** | Records that cannot be confidently linked are preserved and explicitly flagged instead of being silently discarded.                                                                                            |
+| **Execution auditing**     | Pipeline runs are recorded in the `etl_runs` table with execution status, processing counts, duration, and warnings.                                                                                           |
+| **Reproducible loads**     | Idempotent `DELETE + INSERT` persistence ensures repeated pipeline executions produce deterministic database state.                                                                                            |
+| **Data isolation**         | Production source files remain outside the public repository, while the portfolio version uses synthetic fixtures that preserve the structure of the real implementation without exposing private information. |
+| **Schema consistency**     | Column mappings and normalization rules are centralized in `config/mappings.py`, reducing implicit transformations distributed across the codebase.                                                            |
+
+### Data lineage
+
+The platform maintains a clear lineage from raw operational sources to analytical outputs:
+
+```text
+Raw Sources
+    │
+    ├── Web registrations
+    ├── Workshop registrations
+    ├── Chatbot interactions
+    └── Workshop attendance
+            │
+            ▼
+       Extraction
+            │
+            ▼
+      Normalization
+            │
+            ▼
+    Source-level Dedup
+            │
+            ▼
+    Identity Resolution
+      ├── HIGH confidence
+      ├── LOW confidence
+      └── UNMATCHED
+            │
+            ▼
+     Unified User Master
+            │
+      ┌─────┴─────┐
+      ▼           ▼
+   SQLite      CSV Master
+      │           │
+      └─────┬─────┘
+            ▼
+       Analytics
+            │
+            ▼
+   Streamlit Dashboard
 ```
 
-**81 tests total** — run all with: `for f in verify_*.py; do python $f; done`
+This approach makes the analytical layer **auditable by design**: aggregated KPIs can be traced back to consolidated records, and consolidated records retain the information needed to understand how they were produced.
+
 
 ---
 
@@ -301,11 +357,15 @@ Full rationale in [docs/architecture.md](docs/architecture.md). Key choices at a
 
 ## Real-World Implementation
 
-This repo ships a production-inspired implementation originally built for a **Chilean housing advocacy organization** (Déficit Cero), integrating a web registration system, a form-based workshop platform, a housing chatbot, and attendance exports into a unified user master of ~48,000 real records.
+This platform was originally developed and deployed for **Déficit Cero**, a Chilean housing advocacy organization, to consolidate and analyze data from multiple operational sources.
 
-The repository ships with fully **anonymized synthetic data** that replicates those real distributions, so the pipeline and dashboard are fully reproducible without exposing private information.
+The real implementation integrated four heterogeneous sources — web registrations, workshop registrations, chatbot interactions, and workshop attendance — into a unified data pipeline and analytics dashboard. The resulting ETL pipeline and dashboard were delivered as a functioning internal data solution and used with real organizational data.
 
-See: [docs/case-study-deficit-cero.md](docs/case-study-deficit-cero.md)
+This public repository is a **sanitized and reproducible portfolio version** of that implementation. It contains fully synthetic demo data designed to reproduce the structure, data-quality challenges, and representative distributions of the original system, without exposing private organizational information.
+
+The architecture, transformation logic, identity-resolution strategy, analytics layer, and dashboard patterns are therefore grounded in a real-world implementation rather than a purely hypothetical example.
+
+See [docs/case-study-deficit-cero.md](docs/case-study-deficit-cero.md) for the implementation context and engineering decisions.
 
 ---
 
@@ -357,7 +417,7 @@ unified-data-insights-platform/
 ├── build/
 │   └── build_release.ps1          # Nuitka + PyArmor release packaging
 │
-└── verify_*.py                    # 8 standalone verification scripts (81 tests)
+
 ```
 
 ---
@@ -370,14 +430,12 @@ unified-data-insights-platform/
 | ✅ Done | Two-pass identity resolution with confidence scoring |
 | ✅ Done | Idempotent SQLite persistence with run auditing |
 | ✅ Done | Analytics KPI layer + Streamlit dashboard with DataProvider abstraction |
-| ✅ Done | 81 automated tests across 8 verification scripts |
-| ✅ Done | Nuitka standalone build + Tkinter launcher |
 | ✅ Done | Anonymized demo fixtures reproducing real KPIs |
 | 🔄 Planned | Auto-consolidation of multiple export files from a watched directory |
 | 🔄 Planned | GitHub Actions for scheduled pipeline execution |
 | 🔄 Planned | REST API layer over the analytics module |
 | 🔄 Planned | PostgreSQL backend for concurrency and 100K+ volumes |
-
+| 🔄 Planned | Public release packaging and standalone executable distribution
 ---
 
 ## License

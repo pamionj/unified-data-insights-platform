@@ -1115,7 +1115,7 @@ def main() -> None:
            total global, source_label). No se usa para computar gráficos.
     """
     st.set_page_config(
-        page_title="Deficit Cero — Data Platform",
+        page_title="Unified Data Insights Platform",
         page_icon="📊",
         layout="wide",
         initial_sidebar_state="expanded",
